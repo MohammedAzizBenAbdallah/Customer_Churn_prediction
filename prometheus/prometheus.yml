@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s # How often to scrape metrics
+
+scrape_configs:
+  - job_name: 'prometheus'
+    # Scrape Prometheus itself to monitor its health
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'churn_api'
+    # Scrape your FastAPI application
+    static_configs:
+      # 'churn_api:8000' is the key.
+      # 'churn_api' is the service name we will define in docker-compose.
+      - targets: ['churn_api:8000']

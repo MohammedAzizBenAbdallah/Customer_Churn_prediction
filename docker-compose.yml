@@ -1,34 +1,29 @@
-# docker-compose.yml
+version: '3.8'
 
-version: '3.8' # Specifies the docker-compose version
-
-services: # This is where we define our containers
-  
-  # 1. The API Service
-  api:
-    build: . # Build the image from the Dockerfile in this directory
-    container_name: churn-api
+services:
+  # --- 1. Your FastAPI Application ---
+  churn_api:
+    build: .  # Build the image from the Dockerfile in this directory
+    container_name: churn_api
     ports:
-      - "8000:8000" # Map host port 8000 to container port 8000
-    volumes:
-      - ./models:/app/models # Mounts the models folder (so you can update the model)
-    restart: always # Always restart the container if it crashes
+      - "8000:8000" # Expose port 8000 to your host machine
 
-  # 2. The Prometheus Service
+  # --- 2. The Prometheus Monitoring Server ---
   prometheus:
-    image: prom/prometheus:latest # Use the official Prometheus image
+    image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090" # Map host port 9090 to container port 9090
+      - "9090:9090" # Expose Prometheus's web UI
     volumes:
-      # Mount a config file from our local machine into the container
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    restart: always
+      # Mount your config file into the container
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command: '--config.file=/etc/prometheus/prometheus.yml'
 
-  # 3. The Grafana Service
+  # --- 3. The Grafana Dashboard ---
   grafana:
-    image: grafana/grafana-oss:latest # Use the official Grafana image
+    image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000" # Map host port 3000 to container port 3000
-    restart: always
+      - "3000:3000" # Expose Grafana's web UI
+    depends_on:
+      - prometheus # Don't start Grafana until Prometheus is ready

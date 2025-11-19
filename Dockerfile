@@ -1,34 +1,20 @@
-# Dockerfile
+# 1. Use an official Python base image
+FROM python:3.10-slim
 
-# --- Stage 1: Base ---
-# Start from an official, slim Python 3.9 image.
-FROM python:3.9-slim
-
-# Set the working directory inside the container to /app
+# 2. Set the working directory inside the container
 WORKDIR /app
 
-# --- Stage 2: Dependencies ---
-# Copy *only* the requirements file first.
-# This is a cool Docker trick. It caches this layer, so if you
-# don't change your requirements, it won't reinstall them every time.
+# 3. Copy the dependency list and install
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install the Python libraries
-RUN pip install --no-cache-dir --upgrade pip && \
-pip install --no-cache-dir -r requirements.txt
+# 4. Copy your model and source code into the container
+COPY ./models /app/models
+COPY ./src /app/src
 
-# --- Stage 3: Copy Code ---
-# Now, copy the rest of your project code into the /app directory
-# (It will skip files from .dockerignore)
-COPY ./src ./src
-COPY ./models ./models
-
-# --- Stage 4: Expose Port ---
-# Tell Docker the app will run on port 8000 (inside the container)
-# Note: We'll change the uvicorn command to match this
+# 5. Expose the port the app will run on
 EXPOSE 8000
 
-# --- Stage 5: Run Command ---
-# The command to run when the container starts.
-# We tell uvicorn to listen on 0.0.0.0 (all IPs) on port 8000.
+# 6. Command to run the application
+# We use 0.0.0.0 to allow traffic from outside the container
 CMD ["uvicorn", "src.predict_api:app", "--host", "0.0.0.0", "--port", "8000"]

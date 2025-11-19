@@ -1,12 +1,7 @@
-# requirements.txt
-
-# API
 fastapi
 uvicorn[standard]
-
-# Machine Learning
-scikit-learn
-pandas
 joblib
-
+pandas
+scikit-learn
+pydantic
 prometheus-fastapi-instrumentator
