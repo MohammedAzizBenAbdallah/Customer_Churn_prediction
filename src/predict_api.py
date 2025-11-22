@@ -1,8 +1,8 @@
 # src/predict_api.py
-
 import joblib
 import pandas as pd
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .schema import CustomerData # Import our Pydantic model
 from prometheus_fastapi_instrumentator import Instrumentator # For monitoring
 
@@ -10,6 +10,22 @@ from prometheus_fastapi_instrumentator import Instrumentator # For monitoring
 app = FastAPI(
     title="Customer Churn Prediction API",
     description="An API to predict customer churn based on their data."
+)
+
+# --- CORS Configuration ---
+# This allows your React app to talk to this API
+origins = [
+    "http://localhost:3000", # Grafana (just in case)
+    "http://localhost:5173", # Your new Frontend port
+    "http://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,      # List of allowed origins
+    allow_credentials=True,     # Allow cookies/auth headers
+    allow_methods=["*"],        # Allow all methods (POST, GET, etc.)
+    allow_headers=["*"],        # Allow all headers
 )
 
 # --- Add this ---

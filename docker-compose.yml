@@ -1,29 +1,60 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # --- 1. Your FastAPI Application ---
+  # --- 1. FastAPI Backend ---
   churn_api:
-    build: .  # Build the image from the Dockerfile in this directory
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: churn_api
     ports:
-      - "8000:8000" # Expose port 8000 to your host machine
+      - "8000:8000"
+    volumes:
+      - .:/app # Mirrors root folder to /app in container
+    # FIXED: Added "8000" after --port
+    command: uvicorn src.predict_api:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - churn_network
 
-  # --- 2. The Prometheus Monitoring Server ---
+  # --- 2. React Frontend ---
+  frontend:
+    build:
+      context: ./frontend # Points to frontend folder
+      dockerfile: Dockerfile.dev
+    container_name: churn_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - churn_api
+    networks:
+      - churn_network
+    volumes:
+      - ./frontend:/app # Mirrors frontend folder to /app in container
+      - /app/node_modules # Keeps container's node_modules isolated
+
+  # --- 3. Prometheus ---
   prometheus:
-    image: prom/prometheus:latest 
+    image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090" # Expose Prometheus's web UI
+      - "9090:9090"
     volumes:
-      # Mount your config file into the container
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    command: '--config.file=/etc/prometheus/prometheus.yml'
+    command: "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - churn_network
 
-  # --- 3. The Grafana Dashboard ---
+  # --- 4. Grafana ---
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000" # Expose Grafana's web UI
+      - "3000:3000"
     depends_on:
-      - prometheus # Don't start Grafana until Prometheus is ready
+      - prometheus
+    networks:
+      - churn_network
+
+networks:
+  churn_network:
+    driver: bridge

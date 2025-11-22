@@ -1,0 +1,17 @@
+# Use Node.js (not Nginx) for development
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the code
+COPY . .
+
+# Expose Vite's default port
+EXPOSE 5173
+
+# Run the dev server
+CMD ["npm", "run", "dev"]
